@@ -5,3 +5,7 @@ The script uses bscpylgtv as a dependency for the script.
 install using the following command:
 
 pip install bscpylgtv
+
+link to bscpylgtv on github:
+
+https://github.com/chros73/bscpylgtv
