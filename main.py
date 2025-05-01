@@ -6,13 +6,15 @@ from bscpylgtv import WebOsClient
 
 
 TV_IP = "192.168.1.240"
+LG_TV_VOLUME_OUTPUT_NAME="LG TV"
 client = None
 is_muted = False
 
 def is_lg_audio_output():
+    global LG_TV_VOLUME_OUTPUT_NAME
     try:
         output = subprocess.check_output(["SwitchAudioSource", "-c"], text=True).strip()
-        return "LG TV" in output
+        return LG_TV_VOLUME_OUTPUT_NAME in output
     except Exception as e:
         print(f"[⚠️] Failed to check audio output: {e}")
         return False
