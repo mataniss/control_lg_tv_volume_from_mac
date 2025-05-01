@@ -9,3 +9,5 @@ pip install bscpylgtv
 link to bscpylgtv on github:
 
 https://github.com/chros73/bscpylgtv
+
+Also, make sure that the script has input monitoring permisssions and accesiblity permissions, otherwise it won't be able to monitor volume keys presses. 
