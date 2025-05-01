@@ -86,7 +86,12 @@ def send_wol_packet():
 
 def on_press(key):
     try:
-        if key == keyboard.Key.media_volume_up:
+        # Check if the eject button was pressed
+        if "media_eject" in str(key):
+            print("[⚡] Eject button pressed, sending WOL packet...")
+            send_wol_packet()
+        # Check for volume up/down/mute commands
+        elif key == keyboard.Key.media_volume_up:
             asyncio.run(send_volume("up"))
         elif key == keyboard.Key.media_volume_down:
             asyncio.run(send_volume("down"))
