@@ -58,7 +58,7 @@ def on_press(key):
         print("[Error] Failed to send command:", e)
 
 def main():
-    print("[🖥] LG TV Volume Controller using aiopylgtv")
+    print("[🖥] LG TV Volume Controller using bscpylgtv")
     asyncio.run(connect_to_tv())
     print("[🎧] Now listening for volume keys...")
     with keyboard.Listener(on_press=on_press) as listener:
