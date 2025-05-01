@@ -1,0 +1,50 @@
+import asyncio
+import os
+import json
+from pynput import keyboard
+from bscpylgtv import WebOsClient
+# from aiopylgtv import WebOsClient
+
+TV_IP = "192.168.1.240"
+client = None
+
+
+async def send_volume(direction):
+    global client
+    if client is None:
+        await connect_to_tv()
+    await client.connect()
+    try:
+        if direction == "up":
+            
+            await client.volume_up()
+        elif direction == "down":
+            await client.volume_down()
+    except Exception as e:
+        print(f"[❌] Failed to send volume command: {e}")
+
+def on_press(key):
+    try:
+        if key == keyboard.Key.media_volume_up:
+            asyncio.run(send_volume("up"))
+        elif key == keyboard.Key.media_volume_down:
+            asyncio.run(send_volume("down"))
+    except Exception as e:
+        print("[Error] Failed to send command:", e)
+
+async def connect_to_tv():
+    global client
+    client = await WebOsClient.create(TV_IP, ping_interval=None, states=[])
+    await client.connect()
+    print("Connected and paired successfully.")
+
+
+def main():
+    print("[🖥] LG TV Volume Controller using aiopylgtv")
+    asyncio.run(connect_to_tv())
+    print("[🎧] Now listening for volume keys...")
+    with keyboard.Listener(on_press=on_press) as listener:
+        listener.join()
+
+if __name__ == "__main__":
+    main()
