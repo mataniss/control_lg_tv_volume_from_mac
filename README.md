@@ -1,6 +1,8 @@
 This python script enables to control lg smart tv volume by using the regular mac keys.
 Also, the script enalbes to turn on the tv using the eject button on the mac keyboard, and to 
 wake it in case the volume command have failed (becuse the tv is turned off).
+Also, the volume command will be send only if the mac recognizes that the current sound 
+output is the LG TV.
 
 Dependencies:
 The script uses bscpylgtv and wakeonlan as a dependency for the script.
