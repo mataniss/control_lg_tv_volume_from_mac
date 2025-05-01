@@ -1,12 +1,34 @@
 import asyncio
 import subprocess
+import json
 from pynput import keyboard
-import subprocess
 from bscpylgtv import WebOsClient
+from wakeonlan import send_magic_packet
 
+# Default fallback configuration (hardcoded values)
+DEFAULT_CONFIG = {
+    "tv_ip": "192.168.1.240",
+    "tv_mac_address": "XX:XX:XX:XX:XX:XX",  # Replace with your TV's MAC address
+    "lg_tv_volume_output_name": "LG TV"
+}
 
-TV_IP = "192.168.1.240"
-LG_TV_VOLUME_OUTPUT_NAME="LG TV"
+# Load the configuration from the config.json file
+def load_config():
+    try:
+        with open('config.json', 'r') as f:
+            config = json.load(f)
+        return config
+    except Exception as e:
+        print(f"[⚠️] Failed to load configuration: {e}")
+        return None
+
+# Load the configuration (try to load from file first, otherwise use default)
+config = load_config() or DEFAULT_CONFIG
+
+TV_IP = config["tv_ip"]
+TV_MAC_ADDRESS = config["tv_mac_address"]
+LG_TV_VOLUME_OUTPUT_NAME = config["lg_tv_volume_output_name"]
+
 client = None
 is_muted = False
 
@@ -37,6 +59,7 @@ async def send_volume(action):
     try:
         await connect_to_tv()
         await client.connect()
+
         if action == "up":
             await client.volume_up()
         elif action == "down":
@@ -47,8 +70,19 @@ async def send_volume(action):
             print(f"[🔇] Mute toggled: {'Muted' if is_muted else 'Unmuted'}")
 
         print(f"[📡] Sent '{action}' action")
+    
     except Exception as e:
         print(f"[❌] Failed to send volume command: {e}")
+        print("[⚡] Sending WOL (Wake-on-LAN) packet to TV...")
+        send_wol_packet()
+
+def send_wol_packet():
+    try:
+        # Send the WOL packet to the TV using its MAC address
+        send_magic_packet(TV_MAC_ADDRESS)
+        print(f"[🔋] WOL packet sent to MAC address: {TV_MAC_ADDRESS}")
+    except Exception as e:
+        print(f"[❌] Failed to send WOL packet: {e}")
 
 def on_press(key):
     try:
