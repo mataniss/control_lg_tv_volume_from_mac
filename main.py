@@ -1,18 +1,20 @@
 import asyncio
 import subprocess
 from pynput import keyboard
+import subprocess
 from bscpylgtv import WebOsClient
+
 
 TV_IP = "192.168.1.240"
 client = None
 is_muted = False
 
-def is_lg_display_connected():
+def is_lg_audio_output():
     try:
-        output = subprocess.check_output(["system_profiler", "SPDisplaysDataType"], text=True)
-        return "LG" in output
+        output = subprocess.check_output(["SwitchAudioSource", "-c"], text=True).strip()
+        return "LG TV" in output
     except Exception as e:
-        print(f"[⚠️] Failed to check connected displays: {e}")
+        print(f"[⚠️] Failed to check audio output: {e}")
         return False
 
 async def connect_to_tv():
@@ -26,8 +28,8 @@ async def connect_to_tv():
 async def send_volume(action):
     global client, is_muted
 
-    if not is_lg_display_connected():
-        print("[🛑] No LG display detected. Volume command not sent.")
+    if not is_lg_audio_output():
+        print("[🛑] No LG output detected. Volume command not sent.")
         return
 
     try:
