@@ -25,5 +25,6 @@ create a config.json file, that has your addresses. you can use the defualt conf
 for the config.json file.
 
 Requirements: 
+- Python 3 and brew should be installed in order to run the script and in order to install of of the dependencies. 
 - The script needs input monitoring permisssions and accesiblity permissions, otherwise it won't be able to monitor volume keys presses. 
 - LG Connect Apps needs to be enables on the TV settings, so commands that are sent from the mac will be recived on the TV.
