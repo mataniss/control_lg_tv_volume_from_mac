@@ -31,9 +31,9 @@ LG_TV_VOLUME_OUTPUT_NAME = config["lg_tv_volume_output_name"]
 
 client = None
 is_muted = False
+restart_listener_event = asyncio.Event()
 
 def is_lg_audio_output():
-    global LG_TV_VOLUME_OUTPUT_NAME
     try:
         output = subprocess.check_output(["SwitchAudioSource", "-c"], text=True).strip()
         return LG_TV_VOLUME_OUTPUT_NAME in output
@@ -70,7 +70,7 @@ async def send_volume(action):
             print(f"[🔇] Mute toggled: {'Muted' if is_muted else 'Unmuted'}")
 
         print(f"[📡] Sent '{action}' action")
-    
+
     except Exception as e:
         print(f"[❌] Failed to send volume command: {e}")
         print("[⚡] Sending WOL (Wake-on-LAN) packet to TV...")
@@ -78,7 +78,6 @@ async def send_volume(action):
 
 def send_wol_packet():
     try:
-        # Send the WOL packet to the TV using its MAC address
         send_magic_packet(TV_MAC_ADDRESS)
         print(f"[🔋] WOL packet sent to MAC address: {TV_MAC_ADDRESS}")
     except Exception as e:
@@ -86,26 +85,35 @@ def send_wol_packet():
 
 def on_press(key):
     try:
-        # Check if the eject button was pressed
         if "media_eject" in str(key):
             print("[⚡] Eject button pressed, sending WOL packet...")
             send_wol_packet()
-        # Check for volume up/down/mute commands
+            restart_listener_event.set()
+            return False  # Stop current listener
+
         elif key == keyboard.Key.media_volume_up:
             asyncio.run(send_volume("up"))
         elif key == keyboard.Key.media_volume_down:
             asyncio.run(send_volume("down"))
         elif key == keyboard.Key.media_volume_mute:
             asyncio.run(send_volume("mute"))
+
     except Exception as e:
         print("[Error] Failed to send command:", e)
+
+def listen_once():
+    print("[🎧] Listening for volume keys... (Press Eject to restart)")
+    with keyboard.Listener(on_press=on_press) as listener:
+        listener.join()
 
 def main():
     print("[🖥] LG TV Volume Controller using bscpylgtv")
     asyncio.run(connect_to_tv())
-    print("[🎧] Now listening for volume keys...")
-    with keyboard.Listener(on_press=on_press) as listener:
-        listener.join()
+
+    while True:
+        restart_listener_event.clear()
+        listen_once()
+        asyncio.run(restart_listener_event.wait())
 
 if __name__ == "__main__":
     main()
