@@ -4,6 +4,7 @@ import json
 from pynput import keyboard
 from bscpylgtv import WebOsClient
 from wakeonlan import send_magic_packet
+from log import log
 
 # Default fallback configuration (hardcoded values)
 DEFAULT_CONFIG = {
@@ -19,7 +20,7 @@ def load_config():
             config = json.load(f)
         return config
     except Exception as e:
-        print(f"[⚠️] Failed to load configuration: {e}")
+        log(f"[⚠️] Failed to load configuration: {e}")
         return None
 
 # Load the configuration (try to load from file first, otherwise use default)
@@ -38,7 +39,7 @@ def is_lg_audio_output():
         output = subprocess.check_output(["SwitchAudioSource", "-c"], text=True).strip()
         return LG_TV_VOLUME_OUTPUT_NAME in output
     except Exception as e:
-        print(f"[⚠️] Failed to check audio output: {e}")
+        log(f"[⚠️] Failed to check audio output: {e}")
         return False
 
 async def connect_to_tv():
@@ -47,13 +48,13 @@ async def connect_to_tv():
         client = await WebOsClient.create(TV_IP, ping_interval=None, states=[])
     if not client.is_connected:
         await client.connect()
-        print("[✅] Connected and paired successfully.")
+        log("[✅] Connected and paired successfully.")
 
 async def send_volume(action):
     global client, is_muted
 
     if not is_lg_audio_output():
-        print("[🛑] No LG output detected. Volume command not sent.")
+        log("[🛑] No LG output detected. Volume command not sent.")
         return
 
     try:
@@ -67,26 +68,26 @@ async def send_volume(action):
         elif action == "mute":
             is_muted = not is_muted
             await client.set_mute(is_muted)
-            print(f"[🔇] Mute toggled: {'Muted' if is_muted else 'Unmuted'}")
+            log(f"[🔇] Mute toggled: {'Muted' if is_muted else 'Unmuted'}")
 
-        print(f"[📡] Sent '{action}' action")
+        log(f"[📡] Sent '{action}' action")
 
     except Exception as e:
-        print(f"[❌] Failed to send volume command: {e}")
-        print("[⚡] Sending WOL (Wake-on-LAN) packet to TV...")
+        log(f"[❌] Failed to send volume command: {e}")
+        log("[⚡] Sending WOL (Wake-on-LAN) packet to TV...")
         send_wol_packet()
 
 def send_wol_packet():
     try:
         send_magic_packet(TV_MAC_ADDRESS)
-        print(f"[🔋] WOL packet sent to MAC address: {TV_MAC_ADDRESS}")
+        log(f"[🔋] WOL packet sent to MAC address: {TV_MAC_ADDRESS}")
     except Exception as e:
-        print(f"[❌] Failed to send WOL packet: {e}")
+        log(f"[❌] Failed to send WOL packet: {e}")
 
 def on_press(key):
     try:
         if "media_eject" in str(key):
-            print("[⚡] Eject button pressed, sending WOL packet...")
+            log("[⚡] Eject button pressed, sending WOL packet...")
             send_wol_packet()
             restart_listener_event.set()
             return False  # Stop current listener
@@ -99,15 +100,15 @@ def on_press(key):
             asyncio.run(send_volume("mute"))
 
     except Exception as e:
-        print("[Error] Failed to send command:", e)
+        log("[Error] Failed to send command:", e)
 
 def listen_once():
-    print("[🎧] Listening for volume keys... (Press Eject to restart)")
+    log("[🎧] Listening for volume keys... (Press Eject to restart)")
     with keyboard.Listener(on_press=on_press) as listener:
         listener.join()
 
 def main():
-    print("[🖥] LG TV Volume Controller using bscpylgtv")
+    log("[🖥] LG TV Volume Controller using bscpylgtv")
     asyncio.run(connect_to_tv())
 
     while True:

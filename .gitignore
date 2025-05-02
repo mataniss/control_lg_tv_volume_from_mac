@@ -2,3 +2,4 @@
 .vscode/
 config.json
 .DS_Store
+__pycache__/log.cpython-312.pyc
