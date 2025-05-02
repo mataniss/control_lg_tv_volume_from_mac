@@ -19,6 +19,11 @@ brew install switchaudio-osx
 
 At the initial connection, the TV will require enabling the connection from the Mac.
 
+Afterwards, make sure to configure the TV ip address and MAC address.
+You can do it by editing the defualt config in the script itself, or alternitvaly, you can
+create a config.json file, that has your addresses. you can use the defualt config as a template
+for the config.json file.
+
 Requirements: 
 - The script needs input monitoring permisssions and accesiblity permissions, otherwise it won't be able to monitor volume keys presses. 
 - LG Connect Apps needs to be enables on the TV settings, so commands that are sent from the mac will be recived on the TV.
