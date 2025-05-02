@@ -1,3 +1,4 @@
 .aiopylgtv.sqlite
 .vscode/
 config.json
+.DS_Store
