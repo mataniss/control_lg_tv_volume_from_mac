@@ -2,6 +2,7 @@ import asyncio
 import subprocess
 import json
 import threading
+import requests
 from pynput import keyboard
 from bscpylgtv import WebOsClient
 from wakeonlan import send_magic_packet
@@ -94,9 +95,11 @@ def on_press(key):
         if "media_eject" in str(key):
             log("[⚡] Eject button pressed, sending WOL packet...")
             send_wol_packet()
-            restart_listener_event.set()
-            if listener_obj:
-                listener_obj.stop()
+            try:
+                response = requests.get(f"http://localhost:{SERVER_PORT}/api/refreshKeysListener", timeout=2)
+                log(f"[🌐] HTTP refresh triggered: {response.status_code}")
+            except Exception as http_err:
+                log(f"[❌] HTTP refresh error: {http_err}")
             return False
 
         elif key == keyboard.Key.media_volume_up:
