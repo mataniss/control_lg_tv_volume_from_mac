@@ -28,3 +28,8 @@ Requirements:
 - Python 3 and brew should be installed in order to run the script and in order to install of of the dependencies. 
 - The script needs input monitoring permisssions and accesiblity permissions, otherwise it won't be able to monitor volume keys presses. 
 - LG Connect Apps needs to be enables on the TV settings, so commands that are sent from the mac will be recived on the TV.
+
+Integration with hammerspoon:
+The script exposes an http server on port 5001. It can be intergated with hammerspoon to detect 
+OS events, like unlock and screen resoultion, so that curl will be send during this event,
+which will refresh the keys listerer.
