@@ -32,4 +32,4 @@ Requirements:
 Integration with hammerspoon:
 The script exposes an http server on port 5001. It can be intergated with hammerspoon to detect 
 OS events, like unlock and screen resoultion, so that curl will be send during this event,
-which will refresh the keys listerer.
+which will refresh the keys listerer. and example init.lua was added to the project.
