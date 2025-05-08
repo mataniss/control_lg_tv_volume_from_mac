@@ -1,7 +1,7 @@
 local function sendCurlIfLGTV()
     local output = hs.audiodevice.defaultOutputDevice():name()
     if output == "LG TV" then
-        hs.timer.doAfter(2, function()
+        hs.timer.doAfter(3, function()
             hs.execute("curl -X GET http://localhost:5001/api/refreshKeysListener", true)
             hs.alert("Triggered refresh (LG TV)")
         end)
