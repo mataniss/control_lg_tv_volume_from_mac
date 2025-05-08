@@ -7,7 +7,7 @@ Dependencies:
 The script uses bscpylgtv and wakeonlan as a dependency for the script.
 install them using the following command:
 
-pip install bscpylgtv wakeonlan
+pip install bscpylgtv wakeonlan aiohttp
 
 link to bscpylgtv on github:
 

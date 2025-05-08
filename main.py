@@ -1,19 +1,22 @@
 import asyncio
 import subprocess
 import json
+import threading
 from pynput import keyboard
 from bscpylgtv import WebOsClient
 from wakeonlan import send_magic_packet
+from aiohttp import web
 from log import log
 
-# Default fallback configuration (hardcoded values)
+# Default fallback configuration
 DEFAULT_CONFIG = {
     "tv_ip": "192.168.1.240",
     "tv_mac_address": "XX:XX:XX:XX:XX:XX",  # Replace with your TV's MAC address
-    "lg_tv_volume_output_name": "LG TV"
+    "lg_tv_volume_output_name": "LG TV",
+    "server_port": 5001
 }
 
-# Load the configuration from the config.json file
+# Load configuration from config.json
 def load_config():
     try:
         with open('config.json', 'r') as f:
@@ -23,16 +26,18 @@ def load_config():
         log(f"[⚠️] Failed to load configuration: {e}")
         return None
 
-# Load the configuration (try to load from file first, otherwise use default)
+# Apply configuration
 config = load_config() or DEFAULT_CONFIG
-
-TV_IP = config["tv_ip"]
-TV_MAC_ADDRESS = config["tv_mac_address"]
-LG_TV_VOLUME_OUTPUT_NAME = config["lg_tv_volume_output_name"]
+TV_IP = config.get("tv_ip", DEFAULT_CONFIG["tv_ip"])
+TV_MAC_ADDRESS = config.get("tv_mac_address", DEFAULT_CONFIG["tv_mac_address"])
+LG_TV_VOLUME_OUTPUT_NAME = config.get("lg_tv_volume_output_name", DEFAULT_CONFIG["lg_tv_volume_output_name"])
+SERVER_PORT = config.get("server_port", DEFAULT_CONFIG["server_port"])
 
 client = None
 is_muted = False
 restart_listener_event = asyncio.Event()
+listener_thread = None
+listener_obj = None
 
 def is_lg_audio_output():
     try:
@@ -90,7 +95,9 @@ def on_press(key):
             log("[⚡] Eject button pressed, sending WOL packet...")
             send_wol_packet()
             restart_listener_event.set()
-            return False  # Stop current listener
+            if listener_obj:
+                listener_obj.stop()
+            return False
 
         elif key == keyboard.Key.media_volume_up:
             asyncio.run(send_volume("up"))
@@ -103,18 +110,50 @@ def on_press(key):
         log("[Error] Failed to send command:", e)
 
 def listen_once():
-    log("[🎧] Listening for volume keys... (Press Eject to restart)")
-    with keyboard.Listener(on_press=on_press) as listener:
-        listener.join()
+    global listener_thread, listener_obj
 
-def main():
+    def run():
+        global listener_obj
+        log("[🎧] Listening for volume keys... (Press Eject to restart)")
+        with keyboard.Listener(on_press=on_press) as listener:
+            listener_obj = listener
+            listener.join()
+
+    listener_thread = threading.Thread(target=run, daemon=True)
+    listener_thread.start()
+
+# ───────────── HTTP SERVER ─────────────
+
+async def refresh_keys_listener(request):
+    log("[🌐] /api/refreshKeysListener called, restarting listener...")
+    if listener_obj:
+        listener_obj.stop()
+    restart_listener_event.set()
+    return web.json_response({"status": "Listener restart triggered"})
+
+async def start_http_server():
+    app = web.Application()
+    app.add_routes([web.get('/api/refreshKeysListener', refresh_keys_listener)])
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', SERVER_PORT)
+    await site.start()
+    log(f"[🌍] HTTP server running on port {SERVER_PORT}")
+
+# ───────────── MAIN ─────────────
+
+async def main_async():
     log("[🖥] LG TV Volume Controller using bscpylgtv")
-    asyncio.run(connect_to_tv())
+    await connect_to_tv()
+    asyncio.create_task(start_http_server())
 
     while True:
         restart_listener_event.clear()
         listen_once()
-        asyncio.run(restart_listener_event.wait())
+        await restart_listener_event.wait()
+
+def main():
+    asyncio.run(main_async())
 
 if __name__ == "__main__":
     main()
