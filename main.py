@@ -89,16 +89,14 @@ def on_press(key):
         if "media_eject" in str(key):
             log("[⚡] Eject button pressed, sending WOL packet...")
             send_wol_packet()
-
-
+            restart_listener_event.set()
+            return False  # Stop current listen
         elif key == keyboard.Key.media_volume_up:
             asyncio.run(send_volume("up"))
         elif key == keyboard.Key.media_volume_down:
             asyncio.run(send_volume("down"))
         elif key == keyboard.Key.media_volume_mute:
             asyncio.run(send_volume("mute"))
-        restart_listener_event.set()
-        return False  # Stop current listen
     except Exception as e:
         log("[Error] Failed to send command:", e)
 
